@@ -9,23 +9,8 @@ import logging
 import requests
 import requests.exceptions
 
-from railnation.config import (
-    CLIENT_CHECKSUM,
-    MAX_RECONNECT,
-    CONNECTION_TIMEOUT,
-)
-from railnation.core.errors import (
-    RailNationConnectionProblem
-)
-
-
-session = requests.Session()
-session.headers.update({
-    'User-agent': 'Mozilla/5.0 (X11; Linux x86_64) '
-                  'AppleWebKit/537.36 (KHTML, like Gecko) '
-                  'Chrome/36.0.1985.125 Safari/537.36',
-    'Accept-Language': 'en-US,en;q=0.8,ru;q=0.6',
-})
+CLIENT_CHECKSUM = -1
+MAX_RECONNECT = 2
 
 
 def _quote(item):
@@ -53,12 +38,21 @@ def _make_hash(item):
 
 
 class ServerCaller:
-    def __init__(self, server_url):
+    def __init__(self, server_url, session_id):
         self.log = logging.getLogger('ServerCaller')
         self.log.debug('Initialization...')
-        self.api_url = 'http://%s/web/rpc/flash.php' % server_url
+        self.api_url = 'https://%s/web/rpc/flash.php' % server_url
 
-    def call(self, interface_name, method_name, data):
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4)'
+                          'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
+            'Accept-Language': 'de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7',
+            'content-type': 'application/json',
+        })
+        self.session.cookies.update({'PHPSESSID': session_id})
+
+    def call(self, interface_name, method_name, data=None, short_call=205):
         """
         Actual server query.
 
@@ -70,10 +64,13 @@ class ServerCaller:
         :type interface_name: str
         :type method_name: str
         :type data: list
+        :param short_call: int
         :return: server response as dict object (parsed from json)
         :rtype: dict
         """
-        assert session is not None
+        if data is None:
+            data = []
+        assert self.session is not None
         assert isinstance(interface_name, str)
         assert isinstance(method_name, str)
         assert isinstance(data, list)
@@ -82,7 +79,8 @@ class ServerCaller:
         self.log.debug('Data: %s' % data)
 
         target = {'interface': interface_name,
-                  'method': method_name}
+                  'method': method_name,
+                  'shortCall': short_call}
         payload = {'ckecksum': CLIENT_CHECKSUM,
                    'client': 1,
                    'hash': _make_hash(data),
@@ -92,10 +90,9 @@ class ServerCaller:
         while retry_count < MAX_RECONNECT:
             retry_count += 1
             try:
-                r = session.post(self.api_url,
-                                 params=target,
-                                 data=json.dumps(payload),
-                                 timeout=CONNECTION_TIMEOUT)
+                r = self.session.post(self.api_url,
+                                      params=target,
+                                      data=json.dumps(payload))
 
             except requests.exceptions.ConnectionError as err:
                 self.log.error('Connection to %s resulted in error: %s' % (self.api_url,
@@ -113,5 +110,4 @@ class ServerCaller:
                 return result
 
         self.log.critical('Too many connection failures (%s)' % retry_count)
-        raise RailNationConnectionProblem('Too many connection failures (%s)'
-                                          % retry_count)
+        raise Exception('Too many connection failures (%s)' % retry_count)
