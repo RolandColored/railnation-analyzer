@@ -1,13 +1,4 @@
-Rail Nation Client
-==================
+#Rail Nation Analyzer
 
-This is a python client to http://www.rail-nation.com game.
-
-Just for fun.
-
-16/01/2017 -- Project status changed to 'Under Development' (again)
-
-
-### How to run
-
-Use start.sh script in root directory
+This is Jupyter Notebook which offers the possibility to retrieve data from the game *Rail Nation* to calculate arbitrary statistics.
+The purpose is only meant for educational use.
