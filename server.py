@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # -*- coding:  utf-8 -*-
 
-import time
-import json
 import hashlib
+import json
 import logging
+import random
+import time
 
 import requests
 import requests.exceptions
+from tqdm import tqdm
 
 CLIENT_CHECKSUM = -1
 MAX_RECONNECT = 2
@@ -111,3 +113,14 @@ class ServerCaller:
 
         self.log.critical('Too many connection failures (%s)' % retry_count)
         raise Exception('Too many connection failures (%s)' % retry_count)
+
+    def bulk_call(self, interface_name, method_name, datas=None, short_call=205):
+        for data in tqdm(datas):
+            time.sleep(random.randint(1, 3))
+            if not isinstance(data, list):
+                data = [data]
+            answer = self.call(interface_name, method_name, data, short_call)
+            answer['Parameters'] = data
+            yield answer
+
+
