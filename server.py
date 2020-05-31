@@ -43,6 +43,7 @@ class ServerCaller:
     def __init__(self, server_url, session_id):
         self.log = logging.getLogger('ServerCaller')
         self.log.debug('Initialization...')
+        self.server_url = server_url
         self.api_url = 'https://%s/web/rpc/flash.php' % server_url
 
         self.session = requests.Session()
@@ -53,6 +54,11 @@ class ServerCaller:
             'content-type': 'application/json',
         })
         self.session.cookies.update({'PHPSESSID': session_id})
+
+    def properties(self, file_name, version='c8892471b3723f858ebc3ae06474c975'):
+        r = self.session.get(f'https://{self.server_url}/properties/classic/default01.2019/{file_name}.json',
+                             params={'v': version})
+        return r.json()
 
     def call(self, interface_name, method_name, data=None, short_call=205):
         """
