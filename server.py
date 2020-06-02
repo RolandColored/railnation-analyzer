@@ -45,6 +45,7 @@ class ServerCaller:
         self.log.debug('Initialization...')
         self.server_url = server_url
         self.api_url = 'https://%s/web/rpc/flash.php' % server_url
+        self.money = -1
 
         self.session = requests.Session()
         self.session.headers.update({
@@ -115,6 +116,11 @@ class ServerCaller:
             else:
                 result = r.json()
                 self.log.debug('Got response: %s' % result)
+
+                if result['Errorcode'] != 0:
+                    raise Exception('Request has failed: %s' % result)
+
+                self._set_money(result['Infos']['Resources'])
                 return result
 
         self.log.critical('Too many connection failures (%s)' % retry_count)
@@ -128,5 +134,9 @@ class ServerCaller:
             answer = self.call(interface_name, method_name, data, short_call)
             answer['Parameters'] = data
             yield answer
+
+    def _set_money(self, resources_json):
+        resources = json.loads(resources_json)
+        self.money = int(resources['0'])
 
 
