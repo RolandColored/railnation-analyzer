@@ -7,14 +7,11 @@ import networkx as nx
 from server import ServerCaller
 
 
-def verify_session(api):
+def track_network(api):
     server = api.call('ServerInfoInterface', 'getInfo', None)
     print(f'Logged in to {server["Body"]["worldName"]}')
-    return server['Infos']['activeUser']
 
-
-def track_network(api):
-    tracks = api.call('RailInterface', 'getForUser', data=[user_id], short_call=1236)
+    tracks = api.call('RailInterface', 'getForUser', data=[server['Infos']['activeUser']], short_call=1236)
     track_edges = [(track['FromId'], track['ToId']) for track in tracks['Body']]
 
     tracks_graph = nx.Graph()
@@ -37,8 +34,6 @@ if __name__ == "__main__":
 
     # let's go
     api = ServerCaller(args.server, args.session_id)
-    user_id = verify_session(api)
-
     tracks_graph = track_network(api)
 
     # factory properties
