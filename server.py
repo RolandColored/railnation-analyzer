@@ -120,6 +120,9 @@ class ServerCaller:
                 if result['Errorcode'] != 0:
                     raise Exception('Request has failed: %s' % result)
 
+                if result['Infos']['activeUser'] == '00000000-0000-0000-0000-000000000000':
+                    raise Exception('No valid session ID')
+
                 self._set_money(result['Infos']['Resources'])
                 return result
 

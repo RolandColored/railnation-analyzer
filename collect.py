@@ -7,12 +7,6 @@ import networkx as nx
 from server import ServerCaller
 
 
-def verify_session(api):
-    server = api.call('ServerInfoInterface', 'getInfo', None)
-    print(f'Logged in to {server["Body"]["worldName"]}')
-    return server['Infos']['activeUser']
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Collect all train spotters')
     parser.add_argument('session_id', help='The current PHPSESSID')
