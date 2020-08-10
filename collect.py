@@ -1,11 +1,6 @@
 import argparse
-import random
-import time
-
-import networkx as nx
 
 from server import ServerCaller
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Collect all train spotters')
